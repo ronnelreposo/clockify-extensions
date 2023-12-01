@@ -67,11 +67,7 @@ myCors :: Middleware
 myCors = cors (const $ Just policy)
   where
     policy = simpleCorsResourcePolicy
-      { corsOrigins = Just ([
-        "http://localhost:4200",
-        "https://brain-clock-dev.web.app",
-        "https://brain-clock-dev.firebaseapp.com"
-        ], True)
+      { corsOrigins = Just ([ "http://localhost:4200" ], True)
       , corsMethods = ["GET", "POST", "OPTIONS"]
       , corsRequestHeaders = simpleHeaders  -- or specify other headers you want
       , corsExposedHeaders = Nothing
