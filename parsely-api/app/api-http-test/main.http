@@ -1,0 +1,21 @@
+
+@baseUrl = http://localhost:8080
+
+###
+GET {{baseUrl}}
+Origin: http://localhost:4200
+Content-Type: application/json
+
+### Echo 
+POST {{baseUrl}}/echo
+Origin: http://localhost:4200
+Content-Type: application/json
+
+{
+    "message": "Hello world echoed. It's haskell."
+}
+
+### Default Overtime 
+GET {{baseUrl}}/defaultOvertime
+Origin: http://localhost:4200
+Content-Type: application/json

@@ -1,0 +1,4 @@
+.stack-work/
+.stack/
+*.tar.gz
+*.lock
