@@ -55,7 +55,7 @@ wireServer = echoHandler
     defaultOvertimeHandler = do
       result <- liftIO overtimeEntriesIO
       case result of
-        -- Expand knowledge here.
+        -- Improvement. Error Handling. Enhance this.
         Left err -> throwError $ err500 { errBody = LBS.fromStrict (TextEncoding.encodeUtf8 $ Txt.pack err) }
         Right success -> return success
 
@@ -93,7 +93,6 @@ convertToRangeModel :: ClockifyMapped.TimeInterval -> RangeModel
 convertToRangeModel timeInterval =
   let
     anchorTimeInterval = ClockifyMapped.start timeInterval
-    -- TimeEntries is in UTC+0800.
     nominalDiffTime = diffUTCTime (ClockifyMapped.end timeInterval) anchorTimeInterval
     aggregateModel = aggregateStep anchorTimeInterval nominalDiffTime
   in

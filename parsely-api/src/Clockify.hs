@@ -14,6 +14,21 @@ import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.CaseInsensitive (mk)
 import GHC.Generics (Generic)
 
+data TimeInterval = TimeInterval
+    { start :: String
+    , end :: String
+    , duration :: String
+    } deriving(Show, Generic)
+
+data TimeEntry = TimeEntry
+    { id :: String
+    , description :: String
+    , timeInterval :: TimeInterval
+    } deriving (Show, Generic)
+
+instance FromJSON TimeInterval
+instance FromJSON TimeEntry
+
 -- Function to get time entries from Clockify
 getClockifyTimeEntriesIO :: String -> String -> String -> IO (Either String [TimeEntry])
 getClockifyTimeEntriesIO userId workspaceId clockifyApiKey = do
@@ -47,18 +62,3 @@ handleException ex = return (Left ex)
 decodeToTimeEntries :: Http.Response L8.ByteString -> Maybe [TimeEntry]
 decodeToTimeEntries responseByString =
     decode (Http.getResponseBody responseByString) :: Maybe [TimeEntry]
-
-data TimeInterval = TimeInterval
-    { start :: String
-    , end :: String
-    , duration :: String
-    } deriving(Show, Generic)
-
-data TimeEntry = TimeEntry
-    { id :: String
-    , description :: String
-    , timeInterval :: TimeInterval
-    } deriving (Show, Generic)
-
-instance FromJSON TimeInterval
-instance FromJSON TimeEntry

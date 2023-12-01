@@ -17,7 +17,6 @@ data TimeInterval = TimeInterval
   { start :: UTCTime
   , end :: UTCTime
   , duration :: String
-  -- , id :: String
   } deriving(Show, Generic)
 
 data TimeEntry = TimeEntry
@@ -31,7 +30,7 @@ data TimeEntry = TimeEntry
 parseUtcTime :: String -> Either String UTCTime
 parseUtcTime dateString =
   let
-    format = "%Y-%m-%dT%H:%M:%SZ"  -- format matching your date string
+    format = "%Y-%m-%dT%H:%M:%SZ"  -- Improvement. Hard code format, pass as a config.
     utcTimeMaybe = parseTimeM True defaultTimeLocale format dateString :: Maybe UTCTime
   in case utcTimeMaybe of
     Nothing -> Left "Failed to parse UTCTime."
