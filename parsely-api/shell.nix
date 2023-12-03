@@ -16,7 +16,7 @@ in
       USER_ID = "TODO. DEFINE WORKSPACE USER ID";
       WORKSPACE_ID = "TODO. DEFINE WORKSPACE ID";
       # *** Erase this info, do not commit.
-      PERSONALWORK_CLOCKIFY_API_KEY = "TODO. DEFINE API KEY"; 
+      CLOCKIFY_API_KEY = "TODO. DEFINE API KEY"; 
     };
 
     # Export to use the variable on shell child processes.
