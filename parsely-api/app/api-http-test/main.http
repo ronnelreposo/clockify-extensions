@@ -1,5 +1,5 @@
 
-@baseUrl = http://localhost:8080
+@baseUrl = http://localhost:8080/api
 
 ###
 GET {{baseUrl}}
@@ -17,5 +17,10 @@ Content-Type: application/json
 
 ### Default Overtime 
 GET {{baseUrl}}/defaultOvertime
+Origin: http://localhost:4200
+Content-Type: application/json
+
+### Swagger
+GET {{baseUrl}}/swagger-ui
 Origin: http://localhost:4200
 Content-Type: application/json

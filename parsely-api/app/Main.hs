@@ -10,7 +10,7 @@ import Data.Aeson
 import qualified Data.Text as Txt
 import GHC.Generics
 import System.Environment (getEnv)
-import Network.Wai (Middleware)
+import Network.Wai (Middleware, Request, Response, ResponseReceived, pathInfo)
 import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Cors (cors, simpleCorsResourcePolicy, simpleHeaders, CorsResourcePolicy(..))
 import Clockify (getClockifyTimeEntriesIO)
@@ -22,6 +22,10 @@ import Data.Foldable as Foldable ( Foldable(foldl) )
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text.Encoding as TextEncoding
+import Servant.Swagger
+import qualified Data.Swagger as Swagger hiding (Response)
+import Servant.Swagger.UI
+import Control.Lens ( (&), (.~), (?~) )
 
 -- Aggregation model
 type RangeModelDateString = String
@@ -37,16 +41,27 @@ data EchoData = EchoData { message :: Txt.Text } deriving (Show, Generic)
 instance ToJSON EchoData
 instance FromJSON EchoData
 
+-- OpenAPI
+instance Swagger.ToSchema RangeModel
+instance Swagger.ToSchema EchoData
+
 -- Define the API
-type API = "echo" :> ReqBody '[JSON] EchoData :> Post '[JSON] EchoData
-           :<|> "defaultOvertime" :> Get '[JSON] (Map.Map RangeModelDateString (NominalDiffTime, Txt.Text))
-           :<|> Get '[PlainText] Txt.Text
+type API =
+    "api" :> 
+    (
+        "echo" :> ReqBody '[JSON] EchoData :> Post '[JSON] EchoData
+        :<|> "defaultOvertime" :> Get '[JSON] (Map.Map RangeModelDateString (NominalDiffTime, Txt.Text))
+        :<|> Get '[PlainText] Txt.Text
+    )
+
+type APIWithoutCors = SwaggerSchemaUI "swagger-ui" "swagger.json"
+
 
 -- Define the server implementation
-wireServer :: Server API
-wireServer = echoHandler
-        :<|> defaultOvertimeHandler
-        :<|> rootHandler
+defaultServer :: Server API
+defaultServer = echoHandler
+              :<|> defaultOvertimeHandler
+              :<|> rootHandler
   where
     echoHandler :: EchoData -> Handler EchoData
     echoHandler = return
@@ -55,18 +70,27 @@ wireServer = echoHandler
     defaultOvertimeHandler = do
       result <- liftIO overtimeEntriesIO
       case result of
-        -- Improvement. Error Handling. Enhance this.
         Left err -> throwError $ err500 { errBody = LBS.fromStrict (TextEncoding.encodeUtf8 $ Txt.pack err) }
         Right success -> return success
 
     rootHandler :: Handler Txt.Text
     rootHandler = return "Server works 🎉"
 
+swaggerDoc :: Swagger.Swagger
+swaggerDoc = toSwagger (Proxy :: Proxy API)
+              & Swagger.info . Swagger.title       .~ "Parsely API"
+              & Swagger.info . Swagger.version     .~ "1.0"
+              & Swagger.info . Swagger.description ?~ "Clockify Extension Tools"
+
+serverWithoutCors :: Server APIWithoutCors
+serverWithoutCors = swaggerSchemaUIServer swaggerDoc
+
 -- CORS policy with whitelisted origins
-myCors :: Middleware
-myCors = cors (const $ Just policy)
+
+corsPolicyDefault :: Middleware
+corsPolicyDefault = cors (const $ Just corsResourcePolicy)
   where
-    policy = simpleCorsResourcePolicy
+    corsResourcePolicy = simpleCorsResourcePolicy
       { corsOrigins = Just ([ "http://localhost:4200" ], True)
       , corsMethods = ["GET", "POST", "OPTIONS"]
       , corsRequestHeaders = simpleHeaders  -- or specify other headers you want
@@ -77,6 +101,17 @@ myCors = cors (const $ Just policy)
       , corsIgnoreFailures = False
       }
 
+corsPolicyWithoutOrigins :: Middleware
+corsPolicyWithoutOrigins = cors (const $ Just corsResourcePolicy)
+  where
+    corsResourcePolicy = simpleCorsResourcePolicy { corsRequireOrigin = False }
+
+routeToApp :: Application -> Application -> Request -> (Response -> IO ResponseReceived) -> IO ResponseReceived
+routeToApp appWithCors appWithoutCors request respondInput =
+  case pathInfo request of
+    ("api" : _) -> appWithCors request respondInput
+    _ -> appWithoutCors request respondInput
+    
 
 -- UTIL
 
@@ -162,7 +197,11 @@ overtimeEntriesIO = do
 main :: IO ()
 main = do
   envPortStr <- getEnv "API_PORT"
-  let envPort = (read envPortStr :: Int)
-  let url = "http://localhost:" ++ envPortStr
-  putStrLn ("Server running in port " ++ url)
-  run envPort (myCors $ serve (Proxy :: Proxy API) wireServer)
+  let envPort = read envPortStr :: Int
+  putStrLn $ "Server running in port " ++ show envPort
+
+  let appWithCors = corsPolicyDefault $ serve (Proxy :: Proxy API) defaultServer
+  let appWithoutCors = corsPolicyWithoutOrigins $ serve (Proxy :: Proxy APIWithoutCors) serverWithoutCors
+  let combinedApp request _respond = routeToApp appWithCors appWithoutCors request _respond
+
+  run envPort combinedApp

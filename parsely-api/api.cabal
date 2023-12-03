@@ -45,9 +45,12 @@ library
     , http-client-tls
     , http-conduit
     , http-types
+    , lens
     , parsec
     , servant
-    , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , swagger2
     , text
     , time
     , wai
@@ -76,9 +79,13 @@ executable api-exe
     , http-client-tls
     , http-conduit
     , http-types
+    , lens
     , parsec
     , servant
     , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , swagger2
     , text
     , time
     , wai
@@ -108,9 +115,12 @@ test-suite api-test
     , http-client-tls
     , http-conduit
     , http-types
+    , lens
     , parsec
     , servant
-    , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , swagger2
     , text
     , time
     , wai

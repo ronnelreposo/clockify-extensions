@@ -22,18 +22,18 @@ dependencies:
 - warp
 - text
 - parsec
-- http-conduit
 - bytestring
 - http-client
 - http-client-tls
 - http-types
-- servant
-- servant-server
 - yaml
 - time
-- parsec
 - case-insensitive
 - containers
+- servant-swagger
+- swagger2
+- servant-swagger-ui
+- lens
 
 ghc-options:
 - -Wall
